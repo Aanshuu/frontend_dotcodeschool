@@ -33,6 +33,7 @@ import { useSession } from "next-auth/react";
 import { serialize } from "next-mdx-remote/serialize";
 import { MDXRemote, MDXRemoteSerializeResult } from "next-mdx-remote";
 import MDXComponents from "@/components/lessons-interface/mdx-components";
+import CourseOnboarding from "@/components/course-onboarding"; 
 
 type Module = {
   id: string;
@@ -224,6 +225,7 @@ const CoursePage = ({
     <ProgressProvider.Provider value={progressData}>
       <Box maxW="8xl" mx="auto" px={[4, 12]}>
         <Navbar cta={false} />
+        <CourseOnboarding courseTitle={title} />
         <Box maxW="4xl" mx="auto">
           <Link href="/courses" color="green.500" fontSize="5xl">
             <ArrowBackIcon />
