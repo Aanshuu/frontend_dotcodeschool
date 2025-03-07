@@ -31,11 +31,7 @@ import { Fragment, useEffect } from "react";
 import axios from "axios";
 import Image from "next/image";
 import { FaPen } from "react-icons/fa";
-
-interface NavLink {
-  name: string;
-  href: string;
-}
+import { NavbarProps, NavLink, UserDetailProps } from "@/types";
 
 const NavLinks = ({ navLinks }: { navLinks: NavLink[] }) => {
   return map(navLinks, (link) => (
@@ -73,12 +69,6 @@ const StartCourseButton = ({ ...props }: ChakraProps) => {
       Courses
     </PrimaryButton>
   );
-};
-
-type UserDetailProps = {
-  name?: string;
-  image?: string;
-  email?: string;
 };
 
 const UserDetails = ({ name, image, email }: UserDetailProps) => {
@@ -187,19 +177,6 @@ const DrawerMenu = ({
     </Drawer>
   );
 };
-
-interface NavbarProps {
-  navLinks?: NavLink[];
-  cta?: boolean;
-  isLessonInterface?: boolean;
-  lessonDetails?: {
-    courseId: string;
-    lessonId: string;
-    chapterId: string;
-    chapters: any[];
-    githubUrl: string;
-  };
-}
 
 const Navbar = ({
   navLinks = [],

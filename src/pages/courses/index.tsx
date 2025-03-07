@@ -3,14 +3,7 @@ import PrimaryButton from "@/components/primary-button";
 import { getContentByType } from "@/pages/api/get-content";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import { Box, Card, Heading, Link, Stack, Text, Circle, Flex, VStack } from "@chakra-ui/react";
-
-interface Course {
-  slug: string;
-  title: string;
-  level: string;
-  language: string;
-  description: string;
-}
+import { Course } from "@/types";
 
 export default function CoursesPage({ courses }: { courses: Course[] }) {
   return (

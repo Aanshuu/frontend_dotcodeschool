@@ -31,22 +31,11 @@ import {
 } from "react";
 import { useSession } from "next-auth/react";
 import { serialize } from "next-mdx-remote/serialize";
-import { MDXRemote, MDXRemoteSerializeResult } from "next-mdx-remote";
+import { MDXRemote } from "next-mdx-remote";
 import MDXComponents from "@/components/lessons-interface/mdx-components";
-import CourseOnboarding from "@/components/course-onboarding"; 
+import CourseOnboarding from "@/components/course-onboarding";
 
-type Module = {
-  id: string;
-  index: number;
-  title: string;
-  description: MDXRemoteSerializeResult;
-  numOfLessons: number;
-};
-
-interface ModuleProps {
-  module: Module;
-  slug: string;
-}
+import { ModuleProps, ModuleListProps, Author, CoursePageProps } from "@/types";
 
 const ModuleItem = ({ module, slug }: ModuleProps) => {
   const { index, title, description } = module;
@@ -132,10 +121,6 @@ const ModuleItem = ({ module, slug }: ModuleProps) => {
   );
 };
 
-interface ModuleListProps {
-  modules: Module[];
-}
-
 const ModuleList = ({ modules }: ModuleListProps) => {
   return (
     <Box
@@ -165,20 +150,6 @@ const ModuleList = ({ modules }: ModuleListProps) => {
     </Box>
   );
 };
-
-type Author = {
-  name: string;
-  url: string;
-};
-
-interface CoursePageProps {
-  slug: string;
-  title: string;
-  author: Author;
-  description: string;
-  modules: Module[];
-  tags: { language: string; level: string };
-}
 
 const ProgressProvider = createContext({});
 
