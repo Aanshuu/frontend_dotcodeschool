@@ -14,15 +14,12 @@ import successAnimation from "@/../public/static/successAnimation.json";
 import Navbar from "@/components/navbar";
 import { getContentByType } from "@/pages/api/get-content";
 import { flatMapDeep, size } from "lodash";
+import { LottieProps, SuccessPageProps } from "@/types";
 
-const Lottie = dynamic(() => import("react-lottie"), { ssr: false });
-
-interface SuccessPageProps {
-  slug: string;
-  course: string;
-  lesson: string;
-  totalLessonsInCourse: number;
-}
+const Lottie = dynamic<LottieProps>(
+  () => import("react-lottie").then((mod) => mod.default as any), 
+  { ssr: false }
+);
 
 const SuccessPage: React.FC<SuccessPageProps> = (props: SuccessPageProps) => {
   const { slug, course, lesson, totalLessonsInCourse } = props;
