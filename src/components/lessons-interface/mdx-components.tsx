@@ -5,6 +5,7 @@ import { CopyToClipboard } from "react-copy-to-clipboard";
 
 import { Key, useEffect, useState } from "react";
 
+const CopyToClipboardComponent = CopyToClipboard as any;
 const PreComponent = (props: any) => {
   const [isHovered, setIsHovered] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -78,8 +79,9 @@ const PreComponent = (props: any) => {
           </Box>
         )}
       </Highlight>
+      
       {(isHovered || copySuccess) && (
-        <CopyToClipboard text={code} onCopy={() => setCopySuccess(true)}>
+        <CopyToClipboardComponent text={code} onCopy={() => setCopySuccess(true)}>
           <IconButton
             as={copySuccess ? CheckIcon : CopyIcon}
             aria-label="Copy code to clipboard"
@@ -92,7 +94,7 @@ const PreComponent = (props: any) => {
             cursor={copySuccess ? "default" : "pointer"}
             _hover={{ color: "gray.200", bg: "gray.600" }}
           />
-        </CopyToClipboard>
+        </CopyToClipboardComponent>
       )}
     </Box>
   );
