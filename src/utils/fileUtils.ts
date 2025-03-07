@@ -1,6 +1,3 @@
-/**
- * Utilities for file operations and parsing
- */
 
 /**
  * Parse a diff string to extract original and modified content
