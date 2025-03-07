@@ -26,21 +26,11 @@ import {
   CheckIcon,
 } from "@chakra-ui/icons";
 import { MdCode, MdNumbers } from "react-icons/md";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { map } from "lodash";
-import axios from "axios";
 import { useSession } from "next-auth/react";
-
-interface SectionProps {
-  courseId: string;
-  section: {
-    sectionIndex: number;
-    title: string;
-    lessons: any[];
-  };
-  current: string;
-  isActive: boolean;
-}
+import { useProgress } from "@/hooks/useProgress";
+import { BottomNavbarProps, SectionProps } from "@/types";
 
 const Section = ({
   courseId,
@@ -101,19 +91,6 @@ const Section = ({
   );
 };
 
-interface BottomNavbarProps {
-  doesMatch?: boolean;
-  isOpen?: boolean;
-  courseId: string;
-  lessonId: string;
-  chapterId: string;
-  current: string;
-  prev?: string;
-  next?: string;
-  sections: any[];
-  toggleAnswer?: () => void;
-}
-
 const BottomNavbar = ({
   doesMatch,
   isOpen,
@@ -137,85 +114,8 @@ const BottomNavbar = ({
     setIsDrawerOpen(false);
   };
 
-  // TODO: Refactor this to a custom hook
-  const saveProgress = useCallback(
-    async (courseId: string, lessonId: string, chapterId: string) => {
-      // Load the progress from local storage
-      const localProgress: any = localStorage.getItem("progress");
-
-      // Load the progress from the database
-      const savedProgress = session
-        ? await axios
-            .get("/api/get-progress", {
-              params: { user: session?.user },
-            })
-            .then((res) => {
-              return res.data.progress;
-            })
-            .catch((err) => {
-              console.error(err);
-            })
-        : null;
-
-      // Merge the progress from local storage and the database
-      const progress = JSON.parse(
-        savedProgress ? savedProgress : localProgress || "{}",
-      );
-
-      // Update the progress
-      if (!progress[courseId]) {
-        progress[courseId] = {};
-      }
-      if (!progress[courseId][lessonId]) {
-        progress[courseId][lessonId] = {};
-      }
-      progress[courseId][lessonId][chapterId] = true;
-
-      // Save the progress back to local storage
-      localStorage.setItem("progress", JSON.stringify(progress));
-
-      // Save the progress to the database
-      if (session) {
-        axios
-          .post("/api/update-progress", {
-            updates: [{ user: session?.user, progress }],
-          })
-          .catch((err) => {
-            console.error(err);
-            const pendingUpdates = JSON.parse(
-              localStorage.getItem("pendingUpdates") || "[]",
-            );
-            pendingUpdates.push({ courseId, lessonId, chapterId });
-            localStorage.setItem(
-              "pendingUpdates",
-              JSON.stringify(pendingUpdates),
-            );
-          });
-      } else {
-        const pendingUpdates = JSON.parse(
-          localStorage.getItem("pendingUpdates") || "[]",
-        );
-        pendingUpdates.push({ courseId, lessonId, chapterId });
-        localStorage.setItem("pendingUpdates", JSON.stringify(pendingUpdates));
-      }
-    },
-    [session],
-  );
-
-  useEffect(() => {
-    const syncProgress = () => {
-      if (session) {
-        const pendingUpdates = JSON.parse(
-          localStorage.getItem("pendingUpdates") || "[]",
-        );
-        pendingUpdates.forEach((update: any) => {
-          saveProgress(update.courseId, update.lessonId, update.chapterId);
-        });
-        localStorage.setItem("pendingUpdates", "[]");
-      }
-    };
-    syncProgress();
-  }, [session, saveProgress]);
+  // Refractored to useProgress hook
+  const { saveProgress } = useProgress();
 
   return (
     <Box
