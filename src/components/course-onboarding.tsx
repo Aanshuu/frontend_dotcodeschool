@@ -19,14 +19,7 @@ import {
 } from "@chakra-ui/react";
 import { CheckIcon, ChevronRightIcon } from "@chakra-ui/icons";
 import { MdCode, MdNumbers, MdFeedback, MdTipsAndUpdates } from "react-icons/md";
-import { FaArrowRight, FaGithub } from "react-icons/fa";
-
-interface OnboardingStep {
-  title: string;
-  description: string;
-  icon: React.ReactElement;
-  image?: string;
-}
+import { CourseOnboardingProps, OnboardingStep } from "@/types";
 
 const steps: OnboardingStep[] = [
   {
@@ -52,32 +45,37 @@ const steps: OnboardingStep[] = [
   }
 ];
 
-interface CourseOnboardingProps {
-  courseTitle: string;
-}
-
+/**
+ * Course onboarding component that shows a step-by-step guide for new users
+ */
 const CourseOnboarding: React.FC<CourseOnboardingProps> = ({ courseTitle }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [currentStep, setCurrentStep] = useState(0);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
   const toast = useToast();
 
+  // Check if user has seen onboarding for this course
   useEffect(() => {
-    // Check if user has seen onboarding for this course
-    const onboardingSeen = localStorage.getItem(`onboarding-${courseTitle}`);
-    if (!onboardingSeen) {
-      onOpen();
-    } else {
-      setHasSeenOnboarding(true);
+    // Only run in browser environment
+    if (typeof window !== 'undefined') {
+      const onboardingSeen = localStorage.getItem(`onboarding-${courseTitle}`);
+      if (!onboardingSeen) {
+        onOpen();
+      } else {
+        setHasSeenOnboarding(true);
+      }
     }
   }, [courseTitle, onOpen]);
 
+  // Handle next step or complete onboarding
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
       // Mark onboarding as complete
-      localStorage.setItem(`onboarding-${courseTitle}`, "true");
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`onboarding-${courseTitle}`, "true");
+      }
       setHasSeenOnboarding(true);
       onClose();
       toast({
@@ -90,8 +88,11 @@ const CourseOnboarding: React.FC<CourseOnboardingProps> = ({ courseTitle }) => {
     }
   };
 
+  // Handle skip onboarding
   const handleSkip = () => {
-    localStorage.setItem(`onboarding-${courseTitle}`, "true");
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`onboarding-${courseTitle}`, "true");
+    }
     setHasSeenOnboarding(true);
     onClose();
   };
