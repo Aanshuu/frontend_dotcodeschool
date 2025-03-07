@@ -12,10 +12,9 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import SplitPane, { SplitPaneProps } from "react-split-pane";
-import { MDXRemote, MDXRemoteSerializeResult } from "next-mdx-remote";
+import { MDXRemote } from "next-mdx-remote";
 import { endsWith, find, flatMapDeep, isEmpty, map, nth } from "lodash";
 import { serialize } from "next-mdx-remote/serialize";
-import stripComments from "strip-comments";
 
 import { getContentById, getContentByType } from "@/pages/api/get-content";
 import MDXComponents from "@/components/lessons-interface/mdx-components";
@@ -24,35 +23,10 @@ import BottomNavbar from "@/components/lessons-interface/bottom-navbar";
 import { useEffect, useState } from "react";
 import EditorTabs from "@/components/lessons-interface/editor-tabs";
 import FullscreenEditorModal from "@/components/lessons-interface/fullscreen-editor-modal";
+import { useCodeValidation } from "@/hooks/useCodeValidation";
+import { CourseModuleProps } from "@/types";
 
 import "@/app/lib/resizer.css";
-
-// TODO: Move to type.ts file
-type File = {
-  fileName: string;
-  code: string;
-  language: string;
-};
-
-interface Files {
-  source: File[];
-  template: File[];
-  solution: File[];
-}
-
-interface Props {
-  courseId: string;
-  lessonId: string;
-  chapterId: string;
-  mdxSource: MDXRemoteSerializeResult;
-  files: Files;
-  current: string;
-  prev: string;
-  next: string;
-  chapters: any[];
-  sections: any[];
-  githubUrl: string;
-}
 
 export default function CourseModule({
   courseId,
@@ -66,7 +40,7 @@ export default function CourseModule({
   chapters,
   sections,
   githubUrl,
-}: Props) {
+}: CourseModuleProps) {
   const { source, template, solution } = files;
 
   const readOnly = isEmpty(solution);
@@ -81,13 +55,22 @@ export default function CourseModule({
 
   const [editorContent, setEditorContent] = useState(rawFiles);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [doesMatch, setDoesMatch] = useState(false);
+  // const [doesMatch, setDoesMatch] = useState(false);
   const [isAnswerOpen, setIsAnswerOpen] = useState(false);
-  const [incorrectFiles, setIncorrectFiles] = useState<File[]>([]);
-  const [checkedAnswer, setCheckedAnswer] = useState(false);
-  const [showHints, setShowHints] = useState(false);
+  // const [incorrectFiles, setIncorrectFiles] = useState<File[]>([]);
+  // const [checkedAnswer, setCheckedAnswer] = useState(false);
+  // const [showHints, setShowHints] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
   const [showDiff, setShowDiff] = useState(false);
+  const [solutionPanelOpen, setSolutionPanelOpen] = useState(false);
+
+  const {
+    doesMatch,
+    incorrectFiles,
+    checkedAnswer,
+    showHints,
+    validateCode,
+  } = useCodeValidation(rawFiles, solution);
 
   useEffect(() => {
     if (showDiff) {
@@ -98,49 +81,33 @@ export default function CourseModule({
   }, [showDiff, editorContent.length]);
 
   const toggleAnswer = () => {
-    const incorrect: File[] = [];
-    const _doesMatchArr = map(rawFiles, (file, index) => {
-      if (file.fileName.endsWith(".diff")) return true;
-      const solutionFile = find(
-        solution,
-        ({ fileName }) => fileName === file.fileName,
-      );
-      // Remove comments and whitespace
-      const fileCodeWithoutComments = stripComments(file.code);
-      const fileContent = fileCodeWithoutComments.replace(/\s+/g, " ").trim();
-
-      const solutionCodeWithoutComments = stripComments(
-        solutionFile
-          ? solutionFile.code
-          : "// This file doesn't have a solution.",
-      );
-      const solutionContent = solutionCodeWithoutComments
-        .replace(/\s+/g, " ")
-        .trim();
-
-      const isFileCorrect = fileContent === solutionContent || !solutionFile;
-      if (!isFileCorrect && !isAnswerOpen) {
-        incorrect.push(file);
-      }
-      return isFileCorrect;
-    });
-    const _doesMatch = _doesMatchArr.every((doesMatch) => doesMatch);
-    if (!_doesMatch && !isAnswerOpen) {
-      setShowHints(true);
+    // Call validateCode from useCodeValidation hook
+    const isCorrect = validateCode();
+    
+    // Toggle the solution panel and answer view
+    setSolutionPanelOpen(!solutionPanelOpen);
+    setIsAnswerOpen(!isAnswerOpen);
+    
+    // Show appropriate toast notification
+    if (!isCorrect) {
       toast.closeAll();
       toast({
         title: "Your solution doesn't match ours",
-        description:
-          "This doesn't mean you're wrong! We just might have different ways of solving the problem.",
+        description: "This doesn't mean you're wrong! We just might have different ways of solving the problem.",
         status: "warning",
         duration: 9000,
         isClosable: true,
       });
+    } else if (isCorrect) {
+      toast.closeAll();
+      toast({
+        title: "Correct!",
+        description: "You have passed the lesson",
+        status: "success",
+        duration: 9000,
+        isClosable: true,
+      });
     }
-    setIncorrectFiles(incorrect);
-    setDoesMatch(_doesMatch);
-    setCheckedAnswer(true);
-    setIsAnswerOpen(!isAnswerOpen);
   };
 
   useEffect(() => {
@@ -352,7 +319,7 @@ export default function CourseModule({
         current={current}
         sections={sections}
         doesMatch={doesMatch}
-        isOpen={isAnswerOpen}
+        isOpen={solutionPanelOpen} // Make sure this is correctly passed
         {...(!isEmpty(solution) && { toggleAnswer })}
       />
     </Box>
@@ -514,7 +481,7 @@ function mapSectionsToLessons(sections: any[]) {
       id: section.sys.id,
       title: section.fields.title,
       description: section.fields.description,
-      lessons: section.fields.lessons
+      lessons: section.fields.lessons,
     };
   });
 }
@@ -529,7 +496,7 @@ export async function getStaticPaths() {
       return Promise.all(
         modules.map(async (module) => {
           const chapters = await getContentById(module.id);
-          const _chapters: any = chapters.fields.lessons;
+          const _chapters = (chapters as any).fields.lessons;
           return map(_chapters, (chapter, index) => {
             return {
               params: {
